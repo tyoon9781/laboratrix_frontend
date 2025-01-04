@@ -1,0 +1,14 @@
+services:
+  local_web:
+    build:
+      context: .
+    container_name: local_web
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+     - "${FRONTEND_HOST_PORT}:${FRONTEND_CONTAINER_PORT}"
+    environment:
+      FRONTEND_HOST_PORT: ${FRONTEND_HOST_PORT}
+      FRONTEND_CONTAINER_PORT: ${FRONTEND_CONTAINER_PORT}
+    command: ["tail", "-f", "/dev/null"]  ## for Development

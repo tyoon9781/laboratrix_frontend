@@ -1,95 +1,66 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setItems } from "./redux/slices/itemSlice";
+import { setUser } from "./redux/slices/userSlice";
+import { CircularProgress } from "@mui/material";
+import config from "./config";
+import NavBar from "./component/navBar";
+import ItemTable from "./component/itemTable";
+
+const fetchItems = async () => {
+  const res = await fetch(`${config.BACKEND_URL}/items`);
+  if (!res.ok) {
+    throw new Error("failed to fetch item");
+  }
+  return res.json();
+};
+
+const getCurrentUser = async () => {
+  const res = await fetch(`${config.BACKEND_URL}/users/me`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error("[Error] Failed to user info");
+  }
+  return res.json();
+};
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const dispatch = useDispatch();
+  const [isUserLoading, setUserLoading] = useState<boolean>(true);
+  const [isItemLoading, setItemLoading] = useState<boolean>(true);
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  useEffect(() => {
+    getCurrentUser()
+      .then((data) => {
+        dispatch(setUser(data));
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setUserLoading(false);
+      });
+    fetchItems()
+      .then((data) => {
+        dispatch(setItems(data));
+      })
+      .catch((error) => console.error(error))
+      .finally(() => {
+        setItemLoading(false);
+      });
+  }, [dispatch]);
+
+  if (isUserLoading || isItemLoading) {
+    return <CircularProgress />;
+  }
+
+  return (
+    <>
+      <NavBar />
+      <ItemTable />
+    </>
   );
 }

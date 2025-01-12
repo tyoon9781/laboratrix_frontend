@@ -1,5 +1,6 @@
 html,
 body {
+<<<<<<< HEAD
   max-width: 100vw;
   overflow-x: hidden;
 }
@@ -9,3 +10,10 @@ body {
   padding: 0;
   margin: 0;
 }
+=======
+    max-width: 100vw;
+    overflow-x: hidden;
+    padding: 0;
+    margin: 0;
+}
+>>>>>>> 6ff69093a62da3fb26d53868d25f9d6ba600b1cc

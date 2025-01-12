@@ -1,95 +1,72 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/app/redux/store";
+import { setItems } from "@/app/redux/slices/itemsSlice";
+import { setUser } from "@/app/redux/slices/usersSlice";
+import { initItemsPageSize } from "@/app/redux/slices/itemPaginatorSlice";
+import NavBar from "@/app/components/navBar";
+import ItemTableContainer from "@/app/components/itemTableContainer";
+import { authAPI } from "@/app/api/auth";
+import { itemsAPI } from "@/app/api/items";
+import Loading from "@/app/components/loading";
+
+export default function HomePage() {
+  const dispatch = useDispatch();
+  const itemsPage = useSelector((state: RootState) => state.itemsPage);
+
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [isItemLoading, setIsItemLoading] = useState(true);
+
+  const getWhoami = async () => {
+    setIsUserLoading(true);
+    try {
+      const result = await authAPI.whoami();
+      if (result.success) {
+        dispatch(setUser(result.data));
+      } else {
+        document.cookie = "access_token=; Max-Age=0; path=/;";
+        document.cookie = "csrftoken=; Max-Age=0; path=/;";
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+    }
+    setIsUserLoading(false);
+  };
+
+  const getItems = async () => {
+    setIsItemLoading(true);
+    try {
+      const result = await itemsAPI.fetchItems(1);
+      if (result.success) {
+        const totalItemPage = Math.ceil(
+          result.data.count / itemsPage.itemPageSize
+        );
+        dispatch(setItems(result.data.items));
+        dispatch(initItemsPageSize(totalItemPage));
+      } else {
+        console.error("Failed to fetch items:", result.detail);
+      }
+    } catch (err) {
+      console.error("Error fetching items:", err);
+    }
+    setIsItemLoading(false);
+  };
+
+  useEffect(() => {
+    getWhoami();
+    getItems();
+  }, []);
+
+  if (isUserLoading || isItemLoading) {
+    return <Loading />;
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    <>
+      <NavBar />
+      <ItemTableContainer />
+    </>
   );
 }
